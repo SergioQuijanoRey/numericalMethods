@@ -6,6 +6,13 @@ Author:
     - sergiquijano@gmail.com
 """
 
+class RootSolver:
+    def __init__(self, method):
+        self.method = method
+
+    def solve(self, function, lower, upper, max_error, max_iterations):
+        return self.method.solve(function, lower, upper, max_error, max_iterations)
+
 class BisectionMethod:
     def __init__(self):
         pass
@@ -87,3 +94,26 @@ class RegulaFalsiMethod:
             iteration_error = abs(current_middle - past_middle)
 
         return current_middle, iteration_error
+
+class SecantMethod:
+    def __init__(self):
+        pass
+    
+    def solve(self, function, lower, upper, max_error, max_iterations):
+        # Initial values
+        current_iteration = 0
+        current_x = upper
+        past_x = lower
+        iteration_error = current_x - past_x
+
+        # Aproximation of the derivative
+        def derivative_aprox(current_val, past_val):
+            return (function(current_val) - function(past_val)) / (current_val - past_val)
+
+        # Calculations are done
+        while current_iteration < max_iterations and iteration_error > max_error:
+            current_x, past_x = current_x - (function(current_x)) / (derivative_aprox(current_x, past_x)), current_x
+            iteration_error = current_x - past_x
+
+        # Results are returned
+        return current_x, iteration_error
