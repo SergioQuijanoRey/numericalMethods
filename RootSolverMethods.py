@@ -1,6 +1,6 @@
 """
 Description:
-    - File to implement some function root solver methods
+    - File to implement some fucntion root solver methods
 Author:
     - Sergio Quijano Rey
     - sergiquijano@gmail.com
@@ -11,16 +11,32 @@ Author:
 MAX_ITERATIONS = 500
 
 class RootSolver:
+    """Base class of the root solvers. Need to be implemented by child classes"""
     def __init__(self, function):
+        """Initializer of the class"""
         self.function = function
-        self.values = []
+        self.iteration_values = []
 
-    def get_values(self):
-        return self.values
+    def get_iteration_values(self):
+        """Getter of the iteration values"""
+        return self.iteration_values
     
-    def reset_values(self):
-        self.values = []
+    def reset_iteration_values(self):
+        """Resets the iteration value stored during a process"""
+        self.iteration_values = []
+    
+    def solve(self, lower, upper, max_error = 0, max_iterations=MAX_ITERATIONS, verbose = False):
+        """Aproximates the root of a function. It needs to be implemented in child classes
 
+        Parameters:
+            - lower: the lower bound of the interval
+            - upper: the upper bound of the interval
+            - max_error: the max error permited. The error has to be interpreted 
+                         by the child classes (iteration error, real error...)
+            - max_iterations: the maximun iterations allowed, even if error is above max error
+            - verbose: either show the process or not
+        """
+        pass
 
 class BisectionMethod(RootSolver):
     def __init__(self, function):
@@ -29,7 +45,7 @@ class BisectionMethod(RootSolver):
     
     def solve(self, lower, upper, max_error = 0, max_iterations=MAX_ITERATIONS, verbose = False):
         # New values are set
-        self.reset_values()
+        self.reset_iteration_values()
 
         if self.function(lower) * self.function(upper) >= 0:
             print("Initial conditions of Bisection Method not met")
@@ -69,72 +85,76 @@ class BisectionMethod(RootSolver):
             if verbose == True:
                 print("Interation {it}:\t{val}".format(it = current_iteration, val = current_middle))
 
-            self.values.append(current_middle)
+            self.iteration_values.append(current_middle)
 
             current_iteration = current_iteration + 1
         
         return current_middle, current_error
-    
-    def get_values(self):
-        return self.values
 
-class RegulaFalsiMethod:
-    def __init__(self):
-        pass
+class RegulaFalsiMethod(RootSolver):
+    """Regula-Falsi Method
     
-    def solve(self, function, lower, upper, max_error, max_iterations):
-        # Initial parameters
-        current_iteration = 0
+        Consists on a mixed method of bisection and secant methods
+        Use as next middle point the intersection with x axis of the line  f(b) to f(a)
+    """
+
+    def __init__(self, function):
+        """Initializer of the class"""
+        # Base constructor
+        RootSolver.__init__(self, function)
+    
+    def solve(self, lower, upper, max_error = 0, max_iterations=MAX_ITERATIONS, verbose = False):
+        """Aproximates the root of a function
+
+        Parameters:
+            - lower: the lower bound of the interval
+            - upper: the upper bound of the interval
+            - max_error: the max error permited. The error has to be interpreted 
+                         by the child classes (iteration error, real error...)
+            - max_iterations: the maximun iterations allowed, even if error is above max error
+            - verbose: either show the process or not
+        """
+
+        # Initial values
         current_lower = lower
         current_upper = upper
-        current_middle = current_lower
-        iteration_error = max_error
+        current_middle = lower
+        iteration_distance = max_error
+        iteration = 0
 
-        # Repetetive calculations
-        b = function(0)
+        # Fresh list of iteration aproximations
+        self.reset_iteration_values()
 
-        while current_iteration < max_iterations and iteration_error > max_error:
-            # Next cut with the x-axis between f(b) and f(a)
+        # Aproximation Loop
+        while iteration < max_iterations and iteration_distance >= max_error:
             past_middle = current_middle
-            current_middle = (-b) / ((function(current_upper) - function(current_lower)) / (current_upper - current_lower))
+            current_middle = self.__calculate_middle(current_upper, current_lower)
+            iteration_distance = current_middle - past_middle
 
-            # We choose which limit to move
-            if function(current_middle) * function(current_lower) < 0:
+            if self.function(current_middle) * self.function(current_lower) < 0:
                 current_upper = current_middle
-            elif function(current_middle) * function(current_upper) < 0:
+            elif self.function(current_middle) * self.function(current_upper) < 0:
                 current_lower = current_middle
-            elif function(current_middle) == 0:
+            elif self.function(current_middle) == 0:
                 current_error = 0
             else:
-                print("ERROR: unexpected situation at RegulaFalsiMethod.solve()")
-                print("f({}) = {}".format(current_lower, function(current_lower)))
-                print("f({}) = {}".format(current_upper, function(current_upper)))
-                print("f({}) = {}".format(current_middle, function(current_middle)))
+                print("ERROR: unexpected situation at BisectionSolver.solve()")
+                print("f({}) = {}".format(current_lower, self.function(current_lower)))
+                print("f({}) = {}".format(current_upper, self.function(current_upper)))
+                print("f({}) = {}".format(current_middle, self.function(current_middle)))
 
-            current_iteration = current_iteration + 1
-            iteration_error = abs(current_middle - past_middle)
+                # Error values
+                current_middle = current_lower - 1
+                current_error = -1
+            
+            if verbose == True:
+                print("Iteration {it}:\t{val}".format(it = iteration, val = current_middle))
 
-        return current_middle, iteration_error
+            self.iteration_values.append(current_middle)
+            iteration = iteration + 1
 
-class SecantMethod:
-    def __init__(self):
-        pass
+        return current_middle, iteration_distance
     
-    def solve(self, function, lower, upper, max_error, max_iterations):
-        # Initial values
-        current_iteration = 0
-        current_x = upper
-        past_x = lower
-        iteration_error = current_x - past_x
-
-        # Aproximation of the derivative
-        def derivative_aprox(current_val, past_val):
-            return (function(current_val) - function(past_val)) / (current_val - past_val)
-
-        # Calculations are done
-        while current_iteration < max_iterations and iteration_error > max_error:
-            current_x, past_x = current_x - (function(current_x)) / (derivative_aprox(current_x, past_x)), current_x
-            iteration_error = current_x - past_x
-
-        # Results are returned
-        return current_x, iteration_error
+    def __calculate_middle(self, upper, lower):
+        """Private function to calculate the intersection with x axis of the line  f(upper) to f(lower)"""
+        return (self.function(upper) * lower - self.function(lower) * upper) / (self.function(upper) - self.function(lower))
