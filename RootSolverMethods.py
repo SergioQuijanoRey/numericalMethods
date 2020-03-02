@@ -10,14 +10,26 @@ Author:
 #===============================================================================
 MAX_ITERATIONS = 500
 
-class BisectionMethod:
+class RootSolver:
     def __init__(self, function):
         self.function = function
         self.values = []
+
+    def get_values(self):
+        return self.values
+    
+    def reset_values(self):
+        self.values = []
+
+
+class BisectionMethod(RootSolver):
+    def __init__(self, function):
+        # Init de la clase base
+        RootSolver.__init__(self, function)
     
     def solve(self, lower, upper, max_error = 0, max_iterations=MAX_ITERATIONS, verbose = False):
         # New values are set
-        self.values = []
+        self.reset_values()
 
         if self.function(lower) * self.function(upper) >= 0:
             print("Initial conditions of Bisection Method not met")
