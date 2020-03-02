@@ -40,10 +40,21 @@ class RootSolver:
 
 class BisectionMethod(RootSolver):
     def __init__(self, function):
+        """Initializer of the class"""
         # Init de la clase base
         RootSolver.__init__(self, function)
     
     def solve(self, lower, upper, max_error = 0, max_iterations=MAX_ITERATIONS, verbose = False):
+        """Aproximates the root of a function
+
+        Parameters:
+            - lower: the lower bound of the interval
+            - upper: the upper bound of the interval
+            - max_error: the max error permited. The error has to be interpreted 
+                         by the child classes (iteration error, real error...)
+            - max_iterations: the maximun iterations allowed, even if error is above max error
+            - verbose: either show the process or not
+        """
         # New values are set
         self.reset_iteration_values()
 
