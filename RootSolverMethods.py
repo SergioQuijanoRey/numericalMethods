@@ -6,22 +6,23 @@ Author:
     - sergiquijano@gmail.com
 """
 
-class RootSolver:
-    def __init__(self, method):
-        self.method = method
-
-    def solve(self, function, lower, upper, max_error, max_iterations):
-        return self.method.solve(function, lower, upper, max_error, max_iterations)
+# Global parameters
+#===============================================================================
+MAX_ITERATIONS = 500
 
 class BisectionMethod:
-    def __init__(self):
-        pass
+    def __init__(self, function):
+        self.function = function
+        self.values = []
     
-    def solve(self, function, lower, upper, max_error, max_iterations):
-        if function(lower) * function(upper) >= 0:
+    def solve(self, lower, upper, max_error = 0, max_iterations=MAX_ITERATIONS, verbose = False):
+        # New values are set
+        self.values = []
+
+        if self.function(lower) * self.function(upper) >= 0:
             print("Initial conditions of Bisection Method not met")
-            print("f(lower) = {}".format(function(lower)))
-            print("f(upper) = {}".format(function(upper)))
+            print("f(lower) = {}".format(self.function(lower)))
+            print("f(upper) = {}".format(self.function(upper)))
 
             # Error values
             return -1, -1
@@ -37,25 +38,33 @@ class BisectionMethod:
             current_middle = (current_upper + current_lower) / 2
             current_error = (current_upper - current_lower) / 2
 
-            if function(current_middle) * function(current_lower) < 0:
+            if self.function(current_middle) * self.function(current_lower) < 0:
                 current_upper = current_middle
-            elif function(current_middle) * function(current_upper) < 0:
+            elif self.function(current_middle) * self.function(current_upper) < 0:
                 current_lower = current_middle
-            elif function(current_middle) == 0:
+            elif self.function(current_middle) == 0:
                 current_error = 0
             else:
                 print("ERROR: unexpected situation at BisectionSolver.solve()")
-                print("f({}) = {}".format(current_lower, function(current_lower)))
-                print("f({}) = {}".format(current_upper, function(current_upper)))
-                print("f({}) = {}".format(current_middle, function(current_middle)))
+                print("f({}) = {}".format(current_lower, self.function(current_lower)))
+                print("f({}) = {}".format(current_upper, self.function(current_upper)))
+                print("f({}) = {}".format(current_middle, self.function(current_middle)))
 
                 # Error values
                 current_middle = current_lower - 1
                 current_error = -1
 
+            if verbose == True:
+                print("Interation {it}:\t{val}".format(it = current_iteration, val = current_middle))
+
+            self.values.append(current_middle)
+
             current_iteration = current_iteration + 1
         
         return current_middle, current_error
+    
+    def get_values(self):
+        return self.values
 
 class RegulaFalsiMethod:
     def __init__(self):
