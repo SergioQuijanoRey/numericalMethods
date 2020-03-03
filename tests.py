@@ -1,4 +1,5 @@
 from RootSolverMethods import BisectionMethod, RegulaFalsiMethod
+from SignChangesMethods import BruteForceMethod
 import math
 
 function = lambda x: x**3 - 4
@@ -17,3 +18,16 @@ print("Value is {val} with error {err}".format(val=value, err=error))
 print("Values get by iterations: {}".format(solver.get_iteration_values()[0:20]))
 print("")
 
+function = lambda x: x**3 - 4
+splitter = BruteForceMethod(function)
+sign_changes = splitter.solve(-3, 3, 600)
+for pair in sign_changes:
+    print("Sign Change in ({}, {})".format(pair[0], pair[1]))
+print("")
+
+function = lambda x: math.sin(x)
+splitter = BruteForceMethod(function)
+sign_changes = splitter.solve(-100, 100, 10000)
+for pair in sign_changes:
+    print("Sign Change in ({}, {})".format(pair[0], pair[1]))
+print("")

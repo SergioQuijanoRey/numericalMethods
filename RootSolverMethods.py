@@ -1,6 +1,6 @@
 """
 Description:
-    - File to implement some fucntion root solver methods
+    - File to implement some function root solver methods
 Author:
     - Sergio Quijano Rey
     - sergiquijano@gmail.com
@@ -217,9 +217,4 @@ class SecantMethod(RootSolver):
                 print("Iteration {it}:\t{val}".format(it = iteration, val = current_middle))
 
             self.iteration_values.append(current_middle)
-            iteration = iteration + 1
-
-
-
-
             iteration = iteration + 1
