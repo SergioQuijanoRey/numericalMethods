@@ -37,6 +37,31 @@ class RootSolver:
             - verbose: either show the process or not
         """
         pass
+    
+    def move_bound_to_middle(self, lower, middle, upper):
+        """Moves either the lower bound or upper bound to the middle.
+            
+            Parameters:
+                - lower: the lower bound, it can be MODIFIED
+                - middle: the middle bound
+                - upper: the upper bound, it can be MODIFIED
+            Returns:
+                - The pair new_lower, new_upper
+        """
+        if self.function(middle) * self.function(lower) < 0:
+            return lower, middle
+        elif self.function(middle) * self.function(upper) < 0:
+            return middle, upper
+        elif self.function(middle) == 0:
+            return middle, middle
+        else:
+            print("ERROR: unexpected situation at BisectionSolver.solve()")
+            print("f({}) = {}".format(lower, self.function(lower)))
+            print("f({}) = {}".format(upper, self.function(upper)))
+            print("f({}) = {}".format(middle, self.function(middle)))
+
+            # Error Code
+            return lower - 1, upper + 1
 
 class BisectionMethod(RootSolver):
     def __init__(self, function):
@@ -77,22 +102,15 @@ class BisectionMethod(RootSolver):
             current_middle = (current_upper + current_lower) / 2
             current_error = (current_upper - current_lower) / 2
 
-            if self.function(current_middle) * self.function(current_lower) < 0:
-                current_upper = current_middle
-            elif self.function(current_middle) * self.function(current_upper) < 0:
-                current_lower = current_middle
-            elif self.function(current_middle) == 0:
-                current_error = 0
-            else:
-                print("ERROR: unexpected situation at BisectionSolver.solve()")
-                print("f({}) = {}".format(current_lower, self.function(current_lower)))
-                print("f({}) = {}".format(current_upper, self.function(current_upper)))
-                print("f({}) = {}".format(current_middle, self.function(current_middle)))
+            # Bounds are move
+            current_lower, current_upper = self.move_bound_to_middle(current_lower, current_middle, current_upper)
 
-                # Error values
-                current_middle = current_lower - 1
-                current_error = -1
+            # Integrity check
+            if current_lower < lower or current_upper > upper:
+                print("ERROR! Bad bound on BisectionMethod.solve()")
+                return lower - 1, upper + 1
 
+            # Verbose output
             if verbose == True:
                 print("Interation {it}:\t{val}".format(it = current_iteration, val = current_middle))
 
@@ -142,6 +160,43 @@ class RegulaFalsiMethod(RootSolver):
             current_middle = self.__calculate_middle(current_upper, current_lower)
             iteration_distance = current_middle - past_middle
 
+            # We move the bounds
+            current_lower, current_upper = self.move_bound_to_middle(current_lower, current_middle, current_upper)
+
+            # Integrity check
+            if current_lower < lower or current_upper > upper:
+                print("ERROR! Bad bounds on RegulaFalsiMethod.solve()")
+                return lower - 1, upper + 1
+            
+            # Verbose outputs
+            if verbose == True:
+                print("Iteration {it}:\t{val}".format(it = iteration, val = current_middle))
+
+            self.iteration_values.append(current_middle)
+            iteration = iteration + 1
+
+        return current_middle, iteration_distance
+    
+    def __calculate_middle(self, upper, lower):
+        """Private function to calculate the intersection with x axis of the line  f(upper) to f(lower)"""
+        return (self.function(upper) * lower - self.function(lower) * upper) / (self.function(upper) - self.function(lower))
+
+class SecantMethod(RootSolver):
+    def __init__(self, function):
+        # Parent constructor
+        RootSolver.__init__(self, function)
+
+    def solve(self, lower, upper, max_error = 0, max_iterations=MAX_ITERATIONS, verbose = False):
+        # Initial values
+        current_lower = lower
+        current_upper = upper
+        iteration = 0
+        iteration_distance = max_error
+
+        # Aproximation loop
+        while iteration < max_iterations and iteration_distance >= max_error:
+            current_middle = self.__calculate_middle(current_upper, current_lower)
+
             if self.function(current_middle) * self.function(current_lower) < 0:
                 current_upper = current_middle
             elif self.function(current_middle) * self.function(current_upper) < 0:
@@ -164,8 +219,7 @@ class RegulaFalsiMethod(RootSolver):
             self.iteration_values.append(current_middle)
             iteration = iteration + 1
 
-        return current_middle, iteration_distance
-    
-    def __calculate_middle(self, upper, lower):
-        """Private function to calculate the intersection with x axis of the line  f(upper) to f(lower)"""
-        return (self.function(upper) * lower - self.function(lower) * upper) / (self.function(upper) - self.function(lower))
+
+
+
+            iteration = iteration + 1
