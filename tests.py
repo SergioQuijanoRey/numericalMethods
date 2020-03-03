@@ -31,3 +31,9 @@ sign_changes = splitter.solve(-100, 100, 10000)
 for pair in sign_changes:
     print("Sign Change in ({}, {})".format(pair[0], pair[1]))
 print("")
+
+print("Refining the first subinterval")
+sign_changes = splitter.solve(sign_changes[0][0], sign_changes[0][1], 10000)
+for pair in sign_changes:
+    print("Sign Change in ({}, {})".format(pair[0], pair[1]))
+print("")
