@@ -26,7 +26,9 @@ class RootSolver:
         self.iteration_values = []
     
     def solve(self, lower, upper, max_error = 0, max_iterations=MAX_ITERATIONS, verbose = False):
-        """Aproximates the root of a function. It needs to be implemented in child classes
+        """Aproximates the root of a function. This general implementation can
+           be changed in child classes. However, the best way of changing the 
+           behaviour is changing the function self.choose_next_middle()
 
         Parameters:
             - lower: the lower bound of the interval
@@ -36,7 +38,49 @@ class RootSolver:
             - max_iterations: the maximun iterations allowed, even if error is above max error
             - verbose: either show the process or not
         """
-        pass
+        # New values are set
+        self.reset_iteration_values()
+
+        if self.interval_check(lower, upper) == False:
+            print("Initial conditions of Bisection Method not met")
+            print("f(lower) = {}".format(self.function(lower)))
+            print("f(upper) = {}".format(self.function(upper)))
+
+            # Error values
+            return -1, -1
+
+        # Initial values
+        current_upper = upper
+        current_lower = lower
+        current_iteration = 0
+
+        current_middle = upper
+        past_middle = lower
+        iteration_error = max_error
+
+        # Iterations of the method
+        while iteration_error >= max_error and current_iteration < max_iterations:
+            past_middel = current_middle
+            current_middle = self.choose_next_middle(current_lower, current_upper)
+
+            # Bounds are move
+            current_lower, current_upper = self.move_bound_to_middle(current_lower, current_middle, current_upper)
+
+            # Integrity check
+            if current_lower < lower or current_upper > upper:
+                print("ERROR! Bad bound on BisectionMethod.solve()")
+                return lower - 1, upper + 1
+
+            # Verbose output
+            if verbose == True:
+                print("Interation {it}:\t{val}".format(it = current_iteration, val = current_middle))
+
+            self.iteration_values.append(current_middle)
+
+            iteration_distance = abs(current_middle - past_middle)
+            current_iteration = current_iteration + 1
+        
+        return current_middle, iteration_error
     
     def move_bound_to_middle(self, lower, middle, upper):
         """Moves either the lower bound or upper bound to the middle.
@@ -63,62 +107,37 @@ class RootSolver:
             # Error Code
             return lower - 1, upper + 1
 
+    def interval_check(self, lower, upper):
+        """Checks if the interval guarantees a root
+
+           Usually this means that the function evaluated on the sign of lower bound 
+           is different from the sign of the upper bound. However, this check
+           can be modified in child classes
+        """
+        return self.function(lower) * self.function(upper) < 0
+    
+    def choose_next_middle(self, lower, upper):
+        """Chooses the next middle point. 
+
+        This function usually determinates the method which is beign used
+
+        Parameters:
+            - lower: the lower bound of the interval
+            - upper: the upper bound of the interval
+        Returns:
+            - The middle point chosen
+        """
+        pass
+
 class BisectionMethod(RootSolver):
     def __init__(self, function):
         """Initializer of the class"""
         # Init de la clase base
         RootSolver.__init__(self, function)
+
+    def choose_next_middle(self, lower, upper):
+        return (upper + lower) / 2
     
-    def solve(self, lower, upper, max_error = 0, max_iterations=MAX_ITERATIONS, verbose = False):
-        """Aproximates the root of a function
-
-        Parameters:
-            - lower: the lower bound of the interval
-            - upper: the upper bound of the interval
-            - max_error: the max error permited. The error has to be interpreted 
-                         by the child classes (iteration error, real error...)
-            - max_iterations: the maximun iterations allowed, even if error is above max error
-            - verbose: either show the process or not
-        """
-        # New values are set
-        self.reset_iteration_values()
-
-        if self.function(lower) * self.function(upper) >= 0:
-            print("Initial conditions of Bisection Method not met")
-            print("f(lower) = {}".format(self.function(lower)))
-            print("f(upper) = {}".format(self.function(upper)))
-
-            # Error values
-            return -1, -1
-
-        # Initial values
-        current_upper = upper
-        current_lower = lower
-        current_error = (current_upper - current_lower) / 2
-        current_iteration = 0
-
-        # Iterations of the method
-        while current_error > max_error and current_iteration < max_iterations:
-            current_middle = (current_upper + current_lower) / 2
-            current_error = (current_upper - current_lower) / 2
-
-            # Bounds are move
-            current_lower, current_upper = self.move_bound_to_middle(current_lower, current_middle, current_upper)
-
-            # Integrity check
-            if current_lower < lower or current_upper > upper:
-                print("ERROR! Bad bound on BisectionMethod.solve()")
-                return lower - 1, upper + 1
-
-            # Verbose output
-            if verbose == True:
-                print("Interation {it}:\t{val}".format(it = current_iteration, val = current_middle))
-
-            self.iteration_values.append(current_middle)
-
-            current_iteration = current_iteration + 1
-        
-        return current_middle, current_error
 
 class RegulaFalsiMethod(RootSolver):
     """Regula-Falsi Method
@@ -180,41 +199,3 @@ class RegulaFalsiMethod(RootSolver):
     def __calculate_middle(self, upper, lower):
         """Private function to calculate the intersection with x axis of the line  f(upper) to f(lower)"""
         return (self.function(upper) * lower - self.function(lower) * upper) / (self.function(upper) - self.function(lower))
-
-class SecantMethod(RootSolver):
-    def __init__(self, function):
-        # Parent constructor
-        RootSolver.__init__(self, function)
-
-    def solve(self, lower, upper, max_error = 0, max_iterations=MAX_ITERATIONS, verbose = False):
-        # Initial values
-        current_lower = lower
-        current_upper = upper
-        iteration = 0
-        iteration_distance = max_error
-
-        # Aproximation loop
-        while iteration < max_iterations and iteration_distance >= max_error:
-            current_middle = self.__calculate_middle(current_upper, current_lower)
-
-            if self.function(current_middle) * self.function(current_lower) < 0:
-                current_upper = current_middle
-            elif self.function(current_middle) * self.function(current_upper) < 0:
-                current_lower = current_middle
-            elif self.function(current_middle) == 0:
-                current_error = 0
-            else:
-                print("ERROR: unexpected situation at BisectionSolver.solve()")
-                print("f({}) = {}".format(current_lower, self.function(current_lower)))
-                print("f({}) = {}".format(current_upper, self.function(current_upper)))
-                print("f({}) = {}".format(current_middle, self.function(current_middle)))
-
-                # Error values
-                current_middle = current_lower - 1
-                current_error = -1
-            
-            if verbose == True:
-                print("Iteration {it}:\t{val}".format(it = iteration, val = current_middle))
-
-            self.iteration_values.append(current_middle)
-            iteration = iteration + 1
