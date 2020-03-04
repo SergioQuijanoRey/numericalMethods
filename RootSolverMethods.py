@@ -10,6 +10,8 @@ Author:
 #===============================================================================
 MAX_ITERATIONS = 500
 
+# Super-Class
+#===============================================================================
 class RootSolver:
     """Base class of the root solvers. Need to be implemented by child classes"""
     def __init__(self, function):
@@ -60,7 +62,7 @@ class RootSolver:
 
         # Iterations of the method
         while iteration_error >= max_error and current_iteration < max_iterations:
-            past_middel = current_middle
+            past_middle = current_middle
             current_middle = self.choose_next_middle(current_lower, current_upper)
 
             # Bounds are move
@@ -129,6 +131,58 @@ class RootSolver:
         """
         pass
 
+# Super-Class
+#===============================================================================
+class IterationRootSolver(RootSolver):
+    def __init__(self, function):
+        print("DEBUG 01")
+        RootSolver.__init__(function)
+        print("DEBUG 02")
+
+    def solve(self, seed, max_error = 0, max_iterations=MAX_ITERATIONS, verbose = False):
+        """Aproximates the root of a function. This general implementation can
+           be changed in child classes. However, the best way of changing the 
+           behaviour is changing the function self.choose_next_middle()
+
+        Parameters:
+            - lower: the lower bound of the interval
+            - upper: the upper bound of the interval
+            - max_error: the max error permited. The error has to be interpreted 
+                         by the child classes (iteration error, real error...)
+            - max_iterations: the maximun iterations allowed, even if error is above max error
+            - verbose: either show the process or not
+        """
+        # New values are set
+        self.reset_iteration_values()
+
+        # Initial values
+        value = seed
+        iteration = 0
+        iteration_error = max_error
+
+        # Iterations of the method
+        while iteration_error >= max_error and iteration < max_iterations:
+            past_value = value
+
+            # Next iteration is calculated
+            value = self.calculate_next_value(value)
+
+            # Verbose output
+            if verbose == True:
+                print("Interation {it}:\t{val}".format(it = iteration, val = value))
+
+            self.iteration_values.append(value)
+
+            iteration_error = abs(value - past_value)
+            iteration = iteration + 1
+        
+        return value, iteration_error
+    
+    def calculate_next_value(self, value):
+        pass
+
+# BisectionMethod
+#===============================================================================
 class BisectionMethod(RootSolver):
     def __init__(self, function):
         """Initializer of the class"""
@@ -139,6 +193,8 @@ class BisectionMethod(RootSolver):
         return (upper + lower) / 2
     
 
+# RegulaFalsiMethod
+#===============================================================================
 class RegulaFalsiMethod(RootSolver):
     """Regula-Falsi Method
     
@@ -154,3 +210,13 @@ class RegulaFalsiMethod(RootSolver):
     def choose_next_middle(self, upper, lower):
         """Private function to calculate the intersection with x axis of the line  f(upper) to f(lower)"""
         return (self.function(upper) * lower - self.function(lower) * upper) / (self.function(upper) - self.function(lower))
+
+# Newton-Raphson
+#===============================================================================
+class NewtonRaphsonMethod(IterationRootSolver):
+    def __init__(self, function, derivative):
+        self.function = function
+        self.derivative = derivative
+
+    def calculate_next_value(self, value):
+        return value - (self.function(value)) / (self.derivative(value))
