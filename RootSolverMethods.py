@@ -151,51 +151,6 @@ class RegulaFalsiMethod(RootSolver):
         # Base constructor
         RootSolver.__init__(self, function)
     
-    def solve(self, lower, upper, max_error = 0, max_iterations=MAX_ITERATIONS, verbose = False):
-        """Aproximates the root of a function
-
-        Parameters:
-            - lower: the lower bound of the interval
-            - upper: the upper bound of the interval
-            - max_error: the max error permited. The error has to be interpreted 
-                         by the child classes (iteration error, real error...)
-            - max_iterations: the maximun iterations allowed, even if error is above max error
-            - verbose: either show the process or not
-        """
-
-        # Initial values
-        current_lower = lower
-        current_upper = upper
-        current_middle = lower
-        iteration_distance = max_error
-        iteration = 0
-
-        # Fresh list of iteration aproximations
-        self.reset_iteration_values()
-
-        # Aproximation Loop
-        while iteration < max_iterations and iteration_distance >= max_error:
-            past_middle = current_middle
-            current_middle = self.__calculate_middle(current_upper, current_lower)
-            iteration_distance = current_middle - past_middle
-
-            # We move the bounds
-            current_lower, current_upper = self.move_bound_to_middle(current_lower, current_middle, current_upper)
-
-            # Integrity check
-            if current_lower < lower or current_upper > upper:
-                print("ERROR! Bad bounds on RegulaFalsiMethod.solve()")
-                return lower - 1, upper + 1
-            
-            # Verbose outputs
-            if verbose == True:
-                print("Iteration {it}:\t{val}".format(it = iteration, val = current_middle))
-
-            self.iteration_values.append(current_middle)
-            iteration = iteration + 1
-
-        return current_middle, iteration_distance
-    
-    def __calculate_middle(self, upper, lower):
+    def choose_next_middle(self, upper, lower):
         """Private function to calculate the intersection with x axis of the line  f(upper) to f(lower)"""
         return (self.function(upper) * lower - self.function(lower) * upper) / (self.function(upper) - self.function(lower))
